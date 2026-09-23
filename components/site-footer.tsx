@@ -10,10 +10,13 @@ export function SiteFooter() {
             <span className="flex size-7 items-center justify-center rounded-md border border-primary/50 bg-primary/10 text-primary">
               <Shield className="size-4" />
             </span>
-            <span className="font-mono text-base font-bold text-primary">CVEHUB</span>
+            <span className="font-mono text-base font-bold text-primary">
+              CVEHUB
+            </span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            AI 기반 CVE 검색·분석과 CWE 취약점 학습을 위한 보안 실습 플랫폼. 와이어프레임 데모.
+            AI 기반 CVE 검색·분석과 CWE 취약점 학습을 위한 보안 실습 플랫폼.
+            와이어프레임 데모.
           </p>
         </div>
 
@@ -38,7 +41,7 @@ export function SiteFooter() {
         <FooterCol
           title="데이터 출처"
           links={[
-            { href: '#', label: 'NVD' },
+            { href: 'https://nvd.nist.gov/', label: 'NVD' },
             { href: '#', label: 'CISA KEV' },
             { href: '#', label: 'FIRST EPSS' },
             { href: '#', label: 'MITRE CWE' },
@@ -47,8 +50,9 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <p className="font-mono">© 2026 CVEHUB · 학습용 데모</p>
-          <p>데이터는 예시이며 실제 취약점 정보와 다를 수 있습니다.</p>
+          <p className="font-mono">
+            © 2026 CVEHUB · 김정현진에게 납치된 이효정
+          </p>
         </div>
       </div>
     </footer>
@@ -68,16 +72,22 @@ function FooterCol({
         {title}
       </h3>
       <ul className="mt-3 space-y-2">
-        {links.map((l) => (
-          <li key={l.label}>
-            <Link
-              href={l.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-primary"
-            >
-              {l.label}
-            </Link>
-          </li>
-        ))}
+        {links.map((l) => {
+          const isExternal = /^https?:\/\//.test(l.href)
+
+          return (
+            <li key={l.label}>
+              <Link
+                href={l.href}
+                target={isExternal ? '_blank' : undefined}
+                rel={isExternal ? 'noopener noreferrer' : undefined}
+                className="text-sm text-muted-foreground transition-colors hover:text-primary"
+              >
+                {l.label}
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
