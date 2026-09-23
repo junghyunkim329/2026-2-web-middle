@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  color-scheme: dark;
+  --radius: 0.375rem;
+
+  /* Black + neon palette */
+  --background: oklch(0.13 0.008 240);
+  --foreground: oklch(0.93 0.01 200);
+
+  --card: oklch(0.17 0.01 240);
+  --card-foreground: oklch(0.93 0.01 200);
+
+  --popover: oklch(0.16 0.01 240);
+  --popover-foreground: oklch(0.93 0.01 200);
+
+  /* neon green */
+  --primary: #39ff14;
+  --primary-foreground: #071a05;
+
+  /* dark surface for secondary */
+  --secondary: oklch(0.22 0.01 240);
+  --secondary-foreground: oklch(0.93 0.01 200);
+
+  --muted: oklch(0.2 0.01 240);
+  --muted-foreground: oklch(0.62 0.015 220);
+
+  /* neon green */
+  --accent: #39ff14;
+  --accent-foreground: #071a05;
+
+  /* neon magenta/red for critical */
+  --destructive: oklch(0.68 0.26 12);
+  --destructive-foreground: oklch(0.98 0.01 20);
+
+  /* neon amber for warnings */
+  --warning: oklch(0.82 0.17 75);
+
+  --border: oklch(0.28 0.01 240);
+  --input: oklch(0.24 0.01 240);
+  --ring: #39ff14;
+
+  --chart-1: #39ff14;
+  --chart-2: #39ff14;
+  --chart-3: oklch(0.82 0.17 75);
+  --chart-4: oklch(0.68 0.26 12);
+  --chart-5: oklch(0.7 0.16 300);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 12px color-mix(in oklch, currentColor 55%, transparent);
+  }
+  .box-glow {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 40%, transparent),
+      0 0 20px -4px color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+  .box-glow-accent {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--accent) 40%, transparent),
+      0 0 20px -4px color-mix(in oklch, var(--accent) 45%, transparent);
+  }
+  .grid-bg {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in oklch, var(--border) 55%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--border) 55%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 44px 44px;
+  }
+}
