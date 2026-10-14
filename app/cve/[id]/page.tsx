@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CVES, getCve } from '@/lib/mock-data'
 import { SeverityBadge, Tag, StatPill } from '@/components/cve-bits'
+import { FavoriteButton } from '@/components/favorite-button'
 import {
   ArrowLeft,
-  Bookmark,
   GitCompare,
   Sparkles,
   ShieldCheck,
@@ -54,9 +54,7 @@ export default async function CveDetailPage({
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <button className="flex items-center gap-1.5 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20">
-              <Bookmark className="size-4" /> 저장
-            </button>
+            <FavoriteButton cveId={cve.id} />
             <Link
               href="/compare"
               className="flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent/50"
@@ -194,7 +192,7 @@ export default async function CveDetailPage({
           </div>
 
           <Link
-            href="/mypage"
+            href={`/reports/new?cve=${encodeURIComponent(cve.id)}`}
             className="flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             <FileText className="size-4" /> 원데이 리포트 작성

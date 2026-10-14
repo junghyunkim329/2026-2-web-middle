@@ -35,34 +35,22 @@ export function AuthShell({
 export function Field({
   label,
   type = 'text',
-  placeholder,
   hint,
+  ...inputProps
 }: {
   label: string
-  type?: string
-  placeholder?: string
   hint?: string
-}) {
+} & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
       <span className="font-mono text-xs font-medium text-muted-foreground">{label}</span>
       <input
         type={type}
-        placeholder={placeholder}
+        {...inputProps}
         className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
       />
       {hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>}
     </label>
-  )
-}
-
-export function AuthDivider() {
-  return (
-    <div className="my-5 flex items-center gap-3">
-      <span className="h-px flex-1 bg-border" />
-      <span className="font-mono text-[11px] text-muted-foreground">또는</span>
-      <span className="h-px flex-1 bg-border" />
-    </div>
   )
 }
 
