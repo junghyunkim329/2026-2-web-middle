@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { Menu, Shield, User, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { apiFetch } from '@/lib/client-api'
+import { LogOut, Menu, Shield, User, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV = [

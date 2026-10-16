@@ -53,6 +53,29 @@ export type ReportDoc = {
   updatedAt: Date
 }
 
+export type NvdCveResult = {
+  id: string
+  description: string
+  published: string
+  lastModified: string
+  status: string | null
+  cvss: {
+    score: number | null
+    severity: string | null
+    version: string | null
+    vector: string | null
+  } | null
+  weaknesses: string[]
+  references: { url: string; source?: string }[]
+}
+
+export type NvdCveCacheDoc = {
+  cveId: string
+  result: NvdCveResult
+  fetchedAt: Date
+  expiresAt: Date
+}
+
 // ── 연결 ────────────────────────────────────────────────────────
 // 개발 서버는 코드가 바뀔 때마다 모듈을 다시 불러오므로
 // 연결을 globalThis에 보관해 연결이 계속 늘어나는 것을 막는다.
@@ -82,6 +105,7 @@ async function ensureIndexes(db: Db) {
   await Promise.all([
     db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection('loginAttempts').createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 }),
+    db.collection('nvdCveCache').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]).catch((error) => console.warn('TTL 인덱스를 만들지 못했습니다:', error.message))
 
   await Promise.all([
@@ -95,6 +119,7 @@ async function ensureIndexes(db: Db) {
     db.collection('answers').createIndex({ questionId: 1, createdAt: 1 }),
     db.collection('reports').createIndex({ createdAt: -1 }),
     db.collection('reports').createIndex({ authorId: 1 }),
+    db.collection('nvdCveCache').createIndex({ cveId: 1 }, { unique: true }),
   ])
 }
 
@@ -122,5 +147,6 @@ export async function collections() {
     questions: db.collection<QuestionDoc>('questions'),
     answers: db.collection<AnswerDoc>('answers'),
     reports: db.collection<ReportDoc>('reports'),
+    nvdCveCache: db.collection<NvdCveCacheDoc>('nvdCveCache'),
   }
 }
