@@ -178,15 +178,25 @@ export function getCve(id: string) {
   return CVES.find((c) => c.id.toLowerCase() === id.toLowerCase())
 }
 
-export const severityMeta: Record<
-  Severity,
-  { label: string; token: string }
-> = {
-  CRITICAL: { label: 'CRITICAL', token: 'text-destructive border-destructive/50 bg-destructive/10' },
-  HIGH: { label: 'HIGH', token: 'text-warning border-warning/50 bg-warning/10' },
-  MEDIUM: { label: 'MEDIUM', token: 'text-accent border-accent/50 bg-accent/10' },
-  LOW: { label: 'LOW', token: 'text-primary border-primary/50 bg-primary/10' },
-}
+export const severityMeta: Record<Severity, { label: string; token: string }> =
+  {
+    CRITICAL: {
+      label: 'CRITICAL',
+      token: 'text-destructive border-destructive/50 bg-destructive/10',
+    },
+    HIGH: {
+      label: 'HIGH',
+      token: 'text-warning border-warning/50 bg-warning/10',
+    },
+    MEDIUM: {
+      label: 'MEDIUM',
+      token: 'text-accent border-accent/50 bg-accent/10',
+    },
+    LOW: {
+      label: 'LOW',
+      token: 'text-primary border-primary/50 bg-primary/10',
+    },
+  }
 
 export type Cwe = {
   id: string
@@ -248,7 +258,8 @@ export const CWES: Cwe[] = [
     id: 'CWE-94',
     name: 'Code Injection',
     category: '인젝션',
-    description: '외부 입력이 코드로 해석·실행되어 임의 명령이 수행되는 취약점.',
+    description:
+      '외부 입력이 코드로 해석·실행되어 임의 명령이 수행되는 취약점.',
     difficulty: '중급',
     lessons: 5,
     labs: 3,
@@ -269,91 +280,3 @@ export const CWES: Cwe[] = [
 export function getCwe(id: string) {
   return CWES.find((c) => c.id.toLowerCase() === id.toLowerCase())
 }
-
-export type QnaPost = {
-  id: number
-  title: string
-  author: string
-  tags: string[]
-  answers: number
-  votes: number
-  views: number
-  solved: boolean
-  createdAt: string
-  excerpt: string
-}
-
-export const QNA: QnaPost[] = [
-  {
-    id: 1,
-    title: 'Log4Shell 대응 시 JVM 옵션만으로 완전 차단이 가능한가요?',
-    author: 'sec_newbie',
-    tags: ['CVE-2021-44228', 'Log4j', '대응'],
-    answers: 4,
-    votes: 12,
-    views: 342,
-    solved: true,
-    createdAt: '2시간 전',
-    excerpt:
-      'formatMsgNoLookups 옵션을 적용했는데 2.15 미만 버전에서도 완전히 안전한지 확인하고 싶습니다.',
-  },
-  {
-    id: 2,
-    title: 'EPSS 점수와 CVSS 점수 중 우선순위 판단 기준이 궁금합니다',
-    author: 'blue_team',
-    tags: ['EPSS', 'CVSS', '우선순위'],
-    answers: 6,
-    votes: 28,
-    views: 891,
-    solved: true,
-    createdAt: '5시간 전',
-    excerpt:
-      '패치 우선순위를 정할 때 두 지표를 어떻게 조합해서 쓰시나요? 실무 기준이 궁금합니다.',
-  },
-  {
-    id: 3,
-    title: 'MOVEit SQLi 실습 환경에서 페이로드가 막히는데 WAF 우회 팁?',
-    author: 'pentest_jr',
-    tags: ['CVE-2023-34362', 'SQLi', '실습'],
-    answers: 2,
-    votes: 7,
-    views: 156,
-    solved: false,
-    createdAt: '1일 전',
-    excerpt: '기본 union 기반 페이로드가 필터링됩니다. 인코딩 우회 관련 조언 부탁드려요.',
-  },
-  {
-    id: 4,
-    title: 'KEV 목록에 없는 취약점은 대응 후순위로 둬도 될까요?',
-    author: 'ciso_kim',
-    tags: ['KEV', '리스크관리'],
-    answers: 3,
-    votes: 15,
-    views: 402,
-    solved: false,
-    createdAt: '2일 전',
-    excerpt: 'KEV 등재 여부가 실제 위협 판단에서 얼마나 결정적인지 의견을 듣고 싶습니다.',
-  },
-]
-
-export type SavedCve = { id: string; note: string; savedAt: string }
-
-export const SAVED_CVES: SavedCve[] = [
-  { id: 'CVE-2024-3094', note: '공급망 대응 프로세스 검토 필요', savedAt: '2024-04-01' },
-  { id: 'CVE-2021-44228', note: '레거시 서비스 잔존 여부 확인', savedAt: '2024-03-28' },
-  { id: 'CVE-2023-34362', note: 'DB 접근 로그 감사', savedAt: '2024-03-20' },
-]
-
-export type OnedayReport = {
-  id: number
-  cve: string
-  title: string
-  status: '작성중' | '완료' | 'AI 검토'
-  updatedAt: string
-}
-
-export const REPORTS: OnedayReport[] = [
-  { id: 1, cve: 'CVE-2024-3094', title: 'XZ 백도어 원데이 분석', status: '완료', updatedAt: '2024-04-02' },
-  { id: 2, cve: 'CVE-2023-4863', title: 'libwebp 힙 오버플로우 재현', status: 'AI 검토', updatedAt: '2024-03-30' },
-  { id: 3, cve: 'CVE-2022-0847', title: 'Dirty Pipe 권한상승 PoC', status: '작성중', updatedAt: '2024-03-27' },
-]

@@ -12,11 +12,43 @@ const NAV = [
   { href: '/lab', label: '실습' },
   { href: '/compare', label: 'CVE 비교' },
   { href: '/qna', label: '질의응답' },
+  { href: '/reports', label: '원데이 리포트' },
 ]
+
+type NavUser = { nickname: string } | null
+
+export const AUTH_CHANGE_EVENT = 'cvehub:auth-change'
 
 export function SiteNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  // undefined: 확인 중, null: 로그아웃 상태
+  const [user, setUser] = useState<NavUser | undefined>(undefined)
+
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  // 페이지를 옮길 때마다 로그인 상태를 다시 확인한다. (로그인·로그아웃 직후 반영)
+  useEffect(() => {
+    let cancelled = false
+    apiFetch<{ user: NavUser }>('/api/auth/me').then((result) => {
+      if (!cancelled) setUser(result.ok ? result.data.user : null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, refreshKey])
+
+  // 마이페이지에서 닉네임을 바꾸면 메뉴의 닉네임도 바로 바꾼다.
+  useEffect(() => {
+    const onChange = () => setRefreshKey((k) => k + 1)
+    window.addEventListener(AUTH_CHANGE_EVENT, onChange)
+    return () => window.removeEventListener(AUTH_CHANGE_EVENT, onChange)
+  }, [])
+
+  async function logout() {
+    await apiFetch('/api/auth/logout', { method: 'POST' })
+    window.location.assign('/')
+  }
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -51,19 +83,42 @@ export function SiteNav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/login"
-            className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            로그인
-          </Link>
-          <Link
-            href="/mypage"
-            className="flex items-center gap-2 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-          >
-            <User className="size-4" />
-            마이페이지
-          </Link>
+          {user === null && (
+            <>
+              <Link
+                href="/login"
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                로그인
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+              >
+                회원가입
+              </Link>
+            </>
+          )}
+          {user && (
+            <>
+              <Link
+                href="/mypage"
+                className="flex items-center gap-2 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+              >
+                <User className="size-4" />
+                {user.nickname}
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LogOut className="size-4" />
+              </button>
+            </>
+          )}
         </div>
 
         <button
@@ -96,20 +151,41 @@ export function SiteNav() {
               </Link>
             ))}
             <div className="mt-2 flex gap-2 border-t border-border pt-3">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="flex-1 rounded-md border border-border px-3 py-2 text-center text-sm font-medium"
-              >
-                로그인
-              </Link>
-              <Link
-                href="/mypage"
-                onClick={() => setOpen(false)}
-                className="flex-1 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-center text-sm font-medium text-primary"
-              >
-                마이페이지
-              </Link>
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="flex-1 rounded-md border border-border px-3 py-2 text-center text-sm font-medium"
+                  >
+                    로그아웃
+                  </button>
+                  <Link
+                    href="/mypage"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-center text-sm font-medium text-primary"
+                  >
+                    마이페이지
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-md border border-border px-3 py-2 text-center text-sm font-medium"
+                  >
+                    로그인
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-center text-sm font-medium text-primary"
+                  >
+                    회원가입
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
