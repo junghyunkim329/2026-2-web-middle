@@ -16,7 +16,6 @@ export function SiteFooter() {
           </div>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             AI 기반 CVE 검색·분석과 CWE 취약점 학습을 위한 보안 실습 플랫폼.
-            와이어프레임 데모.
           </p>
         </div>
 
@@ -32,10 +31,10 @@ export function SiteFooter() {
         <FooterCol
           title="커뮤니티"
           links={[
-            { href: '/qna', label: '질의응답' },
-            { href: '/mypage', label: '마이페이지' },
             { href: '/login', label: '로그인' },
             { href: '/signup', label: '회원가입' },
+            { href: '/qna', label: '질의응답' },
+            { href: '/mypage', label: '마이페이지' },
           ]}
         />
         <FooterCol
