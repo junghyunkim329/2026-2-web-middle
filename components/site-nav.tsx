@@ -7,7 +7,6 @@ import { Menu, Shield, User, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { href: '/', label: '홈' },
   { href: '/learn', label: '취약점 학습' },
   { href: '/lab', label: '실습' },
   { href: '/compare', label: 'CVE 비교' },
