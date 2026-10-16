@@ -28,6 +28,7 @@ export function AiSearch() {
   const [result, setResult] = useState<CveResult | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const references = [...new Map((result?.references ?? []).map((reference) => [reference.url, reference])).values()]
 
   async function searchCve(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -136,9 +137,9 @@ export function AiSearch() {
             >
               NVD에서 상세 정보 보기 ↗
             </a>
-            {result.references.length > 0 && (
+            {references.length > 0 && (
               <ul className="mt-4 space-y-2 border-t border-border pt-4">
-                {result.references.map((reference) => (
+                {references.map((reference) => (
                   <li key={reference.url} className="truncate text-xs">
                     <a
                       href={reference.url}
