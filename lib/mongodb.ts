@@ -1,4 +1,5 @@
 import { MongoClient, type Db, type ObjectId } from 'mongodb'
+import type { CveAnalysis } from '@/lib/analysis-result'
 
 // ── 컬렉션 문서 타입 ────────────────────────────────────────────
 // _id는 MongoDB가 자동으로 붙이므로 적지 않는다. (조회 결과는 WithId<…> 타입)
@@ -56,6 +57,7 @@ export type ReportDoc = {
 export type NvdCveResult = {
   id: string
   description: string
+  translationFailed: boolean
   published: string
   lastModified: string
   status: string | null
@@ -76,6 +78,29 @@ export type NvdCveCacheDoc = {
   expiresAt: Date
 }
 
+export type AiUsageDoc = {
+  userId: ObjectId
+  dateKey: string
+  count: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type GeminiStateDoc = {
+  _id: 'gemini-daily-quota'
+  providerDateKey: string
+  blockedAt: Date
+}
+
+export type CveAiCacheDoc = {
+  cveId: string
+  translationSource?: string
+  translationKo?: string
+  analysisSourceKey?: string
+  analysis?: CveAnalysis
+  updatedAt: Date
+}
+
 // ── 연결 ────────────────────────────────────────────────────────
 // 개발 서버는 코드가 바뀔 때마다 모듈을 다시 불러오므로
 // 연결을 globalThis에 보관해 연결이 계속 늘어나는 것을 막는다.
@@ -87,7 +112,7 @@ const globalForMongo = globalThis as unknown as {
 function getClient() {
   const uri = process.env.MONGODB_URI
   if (!uri) {
-    throw new Error('MONGODB_URI 환경 변수가 없습니다. 프로젝트 루트의 .env.local 파일을 확인하세요.')
+    throw new Error('MONGODB_URI 환경 변수가 없습니다. 프로젝트 루트의 .env 또는 배포 환경 변수를 확인하세요.')
   }
   if (!globalForMongo._mongoClientPromise) {
     globalForMongo._mongoClientPromise = new MongoClient(uri).connect().catch((error) => {
@@ -120,6 +145,8 @@ async function ensureIndexes(db: Db) {
     db.collection('reports').createIndex({ createdAt: -1 }),
     db.collection('reports').createIndex({ authorId: 1 }),
     db.collection('nvdCveCache').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('aiUsage').createIndex({ userId: 1, dateKey: 1 }, { unique: true }),
+    db.collection('cveAiCache').createIndex({ cveId: 1 }, { unique: true }),
   ])
 }
 
@@ -148,5 +175,8 @@ export async function collections() {
     answers: db.collection<AnswerDoc>('answers'),
     reports: db.collection<ReportDoc>('reports'),
     nvdCveCache: db.collection<NvdCveCacheDoc>('nvdCveCache'),
+    aiUsage: db.collection<AiUsageDoc>('aiUsage'),
+    geminiState: db.collection<GeminiStateDoc>('geminiState'),
+    cveAiCache: db.collection<CveAiCacheDoc>('cveAiCache'),
   }
 }
