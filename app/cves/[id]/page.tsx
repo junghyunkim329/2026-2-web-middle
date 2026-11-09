@@ -13,7 +13,6 @@ import {
   Link2,
   ShieldAlert,
   Sparkles,
-  TerminalSquare,
 } from 'lucide-react'
 import { FavoriteButton } from '@/components/favorite-button'
 import { Tag } from '@/components/cve-bits'
@@ -97,8 +96,11 @@ export default async function CveDetailPage({ params }: PageProps) {
             <ActionLink href="/compare" icon={<GitCompare className="size-4" />}>
               비교에 추가
             </ActionLink>
-            <ActionLink href={`/lab?cve=${encodeURIComponent(cve.id)}`} icon={<TerminalSquare className="size-4" />}>
-              실습 열기
+            <ActionLink
+              href={learnable.length > 0 ? `/learn/${learnable[0].id}` : '/learn'}
+              icon={<BookOpen className="size-4" />}
+            >
+              {learnable.length > 0 ? `${learnable[0].id} 학습하기` : '취약점 학습'}
             </ActionLink>
             <a
               href={nvdUrl}
