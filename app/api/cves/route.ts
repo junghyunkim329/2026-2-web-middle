@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const { nvdCveCache } = await collections()
   const now = new Date()
   const cached = await nvdCveCache.findOne({ cveId: id })
-  if (cached && cached.expiresAt.getTime() > now.getTime() && cached.result.descriptionLang !== undefined) {
+  if (cached && cached.expiresAt.getTime() > now.getTime()) {
     return NextResponse.json({ cve: cached.result, cached: true })
   }
 
@@ -117,12 +117,11 @@ export async function GET(request: Request) {
     pickPrimaryMetric(cve.metrics?.cvssMetricV31) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV30) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV2)
-  const { description, descriptionLang } = pickDescription(cve.descriptions)
+  const description = pickDescription(cve.descriptions)
 
   const result: NvdCveResult = {
     id: cve.id,
     description,
-    descriptionLang,
     published: cve.published,
     lastModified: cve.lastModified,
     status: cve.vulnStatus ?? null,

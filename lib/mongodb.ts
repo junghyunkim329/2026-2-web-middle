@@ -67,12 +67,10 @@ export type NvdCveResult = {
   } | null
   weaknesses: string[]
   references: { url: string; source?: string }[]
-  descriptionLang?: string | null
 }
 
 export type CveDoc = Omit<NvdCveResult, 'id'> & {
   cveId: string
-  descriptionLang: string | null
   descriptions: { lang: string; value: string }[]
   source: 'nvd'
   fetchedAt: Date

@@ -8,7 +8,6 @@ import { ArrowUpRight, Search } from 'lucide-react'
 type CveResult = {
   id: string
   description: string
-  descriptionLang?: string | null
   published: string
   lastModified: string
   status: string | null

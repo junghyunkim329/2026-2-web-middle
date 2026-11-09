@@ -53,11 +53,10 @@ export function isCveId(id: string) {
 }
 
 export function pickDescription(descriptions: { lang: string; value: string }[] | undefined) {
-  for (const lang of ['ko', 'en']) {
-    const value = descriptions?.find((item) => item.lang === lang && item.value.trim())?.value
-    if (value) return { description: value, descriptionLang: lang }
-  }
-  return { description: '설명이 제공되지 않았습니다.', descriptionLang: null }
+  return (
+    descriptions?.find((item) => item.lang === 'en' && item.value.trim())?.value ??
+    '설명이 제공되지 않았습니다.'
+  )
 }
 
 function pickPrimaryMetric(metrics: NvdMetric[] | undefined) {
@@ -78,12 +77,11 @@ function toResult(cve: NvdCve): NvdCveResult {
     pickPrimaryMetric(cve.metrics?.cvssMetricV31) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV30) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV2)
-  const { description, descriptionLang } = pickDescription(cve.descriptions)
+  const description = pickDescription(cve.descriptions)
 
   return {
     id: cve.id,
     description,
-    descriptionLang,
     published: cve.published,
     lastModified: cve.lastModified,
     status: cve.vulnStatus ?? null,
@@ -111,9 +109,7 @@ async function readCache(id: string) {
   try {
     const { nvdCveCache } = await collections()
     const cached = await nvdCveCache.findOne({ cveId: id })
-    if (cached && cached.expiresAt.getTime() > Date.now() && cached.result.descriptionLang !== undefined) {
-      return cached.result
-    }
+    if (cached && cached.expiresAt.getTime() > Date.now()) return cached.result
   } catch (error) {
     console.warn('NVD cache read skipped:', error)
   }
