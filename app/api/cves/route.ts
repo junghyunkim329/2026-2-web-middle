@@ -1,5 +1,7 @@
+// app/api/cves/route.ts — 메인 검색창이 호출하는 CVE 조회 API (GET /api/cves?id=CVE-xxxx-xxxx)
 import { NextResponse } from 'next/server'
 import { collections, type NvdCveResult } from '@/lib/mongodb'
+import { pickDescription } from '@/lib/nvd'
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
   const { nvdCveCache } = await collections()
   const now = new Date()
   const cached = await nvdCveCache.findOne({ cveId: id })
-  if (cached && cached.expiresAt.getTime() > now.getTime()) {
+  if (cached && cached.expiresAt.getTime() > now.getTime() && cached.result.descriptionLang !== undefined) {
     return NextResponse.json({ cve: cached.result, cached: true })
   }
 
@@ -115,15 +117,12 @@ export async function GET(request: Request) {
     pickPrimaryMetric(cve.metrics?.cvssMetricV31) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV30) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV2)
-  const description =
-    cve.descriptions?.find((item) => item.lang === 'ko')?.value ??
-    cve.descriptions?.find((item) => item.lang === 'en')?.value ??
-    cve.descriptions?.[0]?.value ??
-    '설명이 제공되지 않았습니다.'
+  const { description, descriptionLang } = pickDescription(cve.descriptions)
 
   const result: NvdCveResult = {
     id: cve.id,
     description,
+    descriptionLang,
     published: cve.published,
     lastModified: cve.lastModified,
     status: cve.vulnStatus ?? null,

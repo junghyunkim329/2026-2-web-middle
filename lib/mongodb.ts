@@ -67,6 +67,17 @@ export type NvdCveResult = {
   } | null
   weaknesses: string[]
   references: { url: string; source?: string }[]
+  descriptionLang?: string | null
+}
+
+export type CveDoc = Omit<NvdCveResult, 'id'> & {
+  cveId: string
+  descriptionLang: string | null
+  descriptions: { lang: string; value: string }[]
+  source: 'nvd'
+  fetchedAt: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 export type NvdCveCacheDoc = {
@@ -120,6 +131,8 @@ async function ensureIndexes(db: Db) {
     db.collection('reports').createIndex({ createdAt: -1 }),
     db.collection('reports').createIndex({ authorId: 1 }),
     db.collection('nvdCveCache').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cves').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cves').createIndex({ 'cvss.severity': 1, published: -1 }),
   ])
 }
 
@@ -148,5 +161,6 @@ export async function collections() {
     answers: db.collection<AnswerDoc>('answers'),
     reports: db.collection<ReportDoc>('reports'),
     nvdCveCache: db.collection<NvdCveCacheDoc>('nvdCveCache'),
+    cves: db.collection<CveDoc>('cves'),
   }
 }
