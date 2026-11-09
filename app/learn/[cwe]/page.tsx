@@ -1,40 +1,36 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { CWES, getCwe, getCve } from '@/lib/mock-data'
+import { CweReferenceView } from './cwe-reference'
 import { SeverityBadge } from '@/components/cve-bits'
-import {
-  ArrowLeft,
-  BookOpen,
-  CheckCircle2,
-  Circle,
-  FlaskConical,
-  PlayCircle,
-} from 'lucide-react'
+import { ArrowLeft, BookOpen, Circle } from 'lucide-react'
 
 export function generateStaticParams() {
   return CWES.map((c) => ({ cwe: c.id }))
 }
 
 const CURRICULUM = [
-  { title: '개념과 발생 원리', done: true },
-  { title: '취약 코드 패턴 식별', done: true },
-  { title: '실제 CVE 사례 분석', done: false },
-  { title: '익스플로잇 재현', done: false },
-  { title: '완화 및 시큐어 코딩', done: false },
+  '개념과 발생 원리',
+  '취약 코드 패턴 식별',
+  '실제 CVE 사례 분석',
+  '익스플로잇 재현',
+  '완화 및 시큐어 코딩',
 ]
 
 export default async function CweDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ cwe: string }>
+  searchParams: Promise<{ cve?: string }>
 }) {
   const { cwe: cweId } = await params
   const cwe = getCwe(cweId)
-  if (!cwe) notFound()
+  if (!cwe) {
+    const { cve } = await searchParams
+    return <CweReferenceView id={cweId} fromCve={cve} />
+  }
 
   const relatedCves = cwe.relatedCves.map((id) => getCve(id)).filter(Boolean)
-  const progress = CURRICULUM.filter((c) => c.done).length
-  const pct = Math.round((progress / CURRICULUM.length) * 100)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -61,11 +57,9 @@ export default async function CweDetailPage({
         <div className="mt-5">
           <div className="flex items-center justify-between font-mono text-xs">
             <span className="text-muted-foreground">학습 진행률</span>
-            <span className="text-primary">{pct}%</span>
+            <span className="text-muted-foreground">0%</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-primary box-glow" style={{ width: `${pct}%` }} />
-          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary" />
         </div>
       </div>
 
@@ -75,27 +69,11 @@ export default async function CweDetailPage({
             <BookOpen className="size-4 text-primary" /> 커리큘럼
           </h2>
           <ol className="mt-4 space-y-2">
-            {CURRICULUM.map((step, i) => (
-              <li
-                key={step.title}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
-              >
-                {step.done ? (
-                  <CheckCircle2 className="size-5 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="size-5 shrink-0 text-muted-foreground" />
-                )}
+            {CURRICULUM.map((title, i) => (
+              <li key={title} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+                <Circle className="size-5 shrink-0 text-muted-foreground" />
                 <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
-                <span
-                  className={`flex-1 text-sm ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}
-                >
-                  {step.title}
-                </span>
-                {!step.done && i === progress && (
-                  <span className="flex items-center gap-1 font-mono text-[11px] text-accent">
-                    <PlayCircle className="size-3.5" /> 이어서
-                  </span>
-                )}
+                <span className="flex-1 text-sm text-muted-foreground">{title}</span>
               </li>
             ))}
           </ol>
@@ -135,21 +113,8 @@ export default async function CweDetailPage({
                 </span>
                 <span className="font-mono text-foreground">{cwe.lessons}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <FlaskConical className="size-4" /> 실습 랩
-                </span>
-                <span className="font-mono text-foreground">{cwe.labs}</span>
-              </div>
             </div>
           </div>
-
-          <Link
-            href="/lab"
-            className="flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-          >
-            <FlaskConical className="size-4" /> 실습 랩 시작
-          </Link>
         </aside>
       </div>
     </div>

@@ -19,7 +19,7 @@ import { Tag } from '@/components/cve-bits'
 import { getNvdCve } from '@/lib/nvd'
 import { parseCvssVector, severityStyle, toSeverity, type CvssMetricItem } from '@/lib/cvss'
 import { WeaknessChip } from '@/components/weakness-chip'
-import { getCwe, type Cwe } from '@/lib/mock-data'
+import { getCwe } from '@/lib/mock-data'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { SourceSection, SourceSectionSkeleton } from './source-section'
@@ -54,7 +54,10 @@ export default async function CveDetailPage({ params }: PageProps) {
   const metrics = parseCvssVector(cve.cvss?.vector)
   const references = [...new Map(cve.references.map((r) => [r.url, r])).values()]
   const nvdUrl = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cve.id)}`
-  const learnable = [...new Set(cve.weaknesses)].map((w) => getCwe(w)).filter((c): c is Cwe => !!c)
+  const cweIds = [...new Set(cve.weaknesses)]
+    .filter((w) => /^CWE-\d+$/.test(w))
+    .sort((a, b) => Number(!!getCwe(b)) - Number(!!getCwe(a)))
+  const learnHref = (cweId: string) => `/learn/${cweId}?cve=${encodeURIComponent(cve.id)}`
 
   return (
     <div className="relative">
@@ -96,12 +99,11 @@ export default async function CveDetailPage({ params }: PageProps) {
             <ActionLink href="/compare" icon={<GitCompare className="size-4" />}>
               비교에 추가
             </ActionLink>
-            <ActionLink
-              href={learnable.length > 0 ? `/learn/${learnable[0].id}` : '/learn'}
-              icon={<BookOpen className="size-4" />}
-            >
-              {learnable.length > 0 ? `${learnable[0].id} 학습하기` : '취약점 학습'}
-            </ActionLink>
+            {cweIds.length > 0 && (
+              <ActionLink href={learnHref(cweIds[0])} icon={<BookOpen className="size-4" />}>
+                {cweIds[0]} 학습하기
+              </ActionLink>
+            )}
             <a
               href={nvdUrl}
               target="_blank"
@@ -158,7 +160,7 @@ export default async function CveDetailPage({ params }: PageProps) {
               {cve.weaknesses.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {[...new Set(cve.weaknesses)].map((w) => (
-                    <WeaknessChip key={w} id={w} />
+                    <WeaknessChip key={w} id={w} cveId={cve.id} />
                   ))}
                 </div>
               ) : (
@@ -200,17 +202,19 @@ export default async function CveDetailPage({ params }: PageProps) {
               <h3 className="flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <BookOpen className="size-3.5 text-primary" /> 취약점 학습
               </h3>
-              {learnable.length > 0 ? (
+              {cweIds.length > 0 ? (
                 <ul className="mt-3 space-y-2">
-                  {learnable.map((cwe) => (
-                    <li key={cwe.id}>
+                  {cweIds.map((cweId) => (
+                    <li key={cweId}>
                       <Link
-                        href={`/learn/${cwe.id}`}
+                        href={learnHref(cweId)}
                         className="group flex items-center justify-between gap-2 rounded-lg border border-border bg-background/50 px-3 py-2.5 transition-colors hover:border-primary/50"
                       >
                         <div className="min-w-0">
-                          <p className="font-mono text-xs font-semibold text-primary">{cwe.id}</p>
-                          <p className="truncate text-sm text-foreground">{cwe.name}</p>
+                          <p className="font-mono text-xs font-semibold text-primary">{cweId}</p>
+                          <p className="truncate text-sm text-foreground">
+                            {getCwe(cweId)?.name ?? 'MITRE 공식 자료로 학습'}
+                          </p>
                         </div>
                         <span className="shrink-0 font-mono text-[11px] text-primary transition-transform group-hover:translate-x-0.5">
                           학습하기 →
@@ -220,15 +224,9 @@ export default async function CveDetailPage({ params }: PageProps) {
                   ))}
                 </ul>
               ) : (
-                <>
-                  <p className="mt-3 text-sm text-muted-foreground">이 CVE의 약점 유형은 아직 학습 페이지가 없어요.</p>
-                  <Link
-                    href="/learn"
-                    className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline"
-                  >
-                    전체 학습 목록 보기 →
-                  </Link>
-                </>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  NVD에 이 CVE의 약점(CWE) 정보가 없어 연결할 학습 페이지가 없어요.
+                </p>
               )}
             </div>
 
