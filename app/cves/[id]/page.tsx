@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import { FavoriteButton } from '@/components/favorite-button'
 import { Tag } from '@/components/cve-bits'
-import { DescriptionLang } from '@/components/description-lang'
 import { getNvdCve } from '@/lib/nvd'
 import { parseCvssVector, severityStyle, toSeverity, type CvssMetricItem } from '@/lib/cvss'
 import { getCwe } from '@/lib/mock-data'
@@ -110,7 +109,7 @@ export default async function CveDetailPage({ params }: PageProps) {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
           <div className="min-w-0 space-y-8">
-            <Section title="취약점 개요" aside={<DescriptionLang lang={cve.descriptionLang} />}>
+            <Section title="취약점 개요">
               <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
                 <p className="text-sm leading-relaxed text-foreground sm:text-base">{cve.description}</p>
               </div>

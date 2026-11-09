@@ -4,7 +4,6 @@
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { ArrowUpRight, Search } from 'lucide-react'
-import { DescriptionLang } from '@/components/description-lang'
 
 type CveResult = {
   id: string
@@ -120,10 +119,7 @@ export function AiSearch() {
                 </span>
               )}
             </div>
-            <div className="mt-4">
-              <DescriptionLang lang={result.descriptionLang} />
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">{result.description}</p>
+            <p className="mt-4 text-sm leading-relaxed text-foreground">{result.description}</p>
             <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs sm:grid-cols-3">
               <div>
                 <dt className="text-muted-foreground">공개일</dt>
