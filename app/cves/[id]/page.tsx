@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
   ArrowLeft,
+  BookOpen,
   CalendarDays,
   ExternalLink,
   FileText,
@@ -19,6 +20,7 @@ import { Tag } from '@/components/cve-bits'
 import { getNvdCve } from '@/lib/nvd'
 import { parseCvssVector, severityStyle, toSeverity, type CvssMetricItem } from '@/lib/cvss'
 import { WeaknessChip } from '@/components/weakness-chip'
+import { getCwe, type Cwe } from '@/lib/mock-data'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { SourceSection, SourceSectionSkeleton } from './source-section'
@@ -53,6 +55,7 @@ export default async function CveDetailPage({ params }: PageProps) {
   const metrics = parseCvssVector(cve.cvss?.vector)
   const references = [...new Map(cve.references.map((r) => [r.url, r])).values()]
   const nvdUrl = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cve.id)}`
+  const learnable = [...new Set(cve.weaknesses)].map((w) => getCwe(w)).filter((c): c is Cwe => !!c)
 
   return (
     <div className="relative">
@@ -191,6 +194,42 @@ export default async function CveDetailPage({ params }: PageProps) {
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            <div className="rounded-xl border border-primary/30 bg-card p-5">
+              <h3 className="flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <BookOpen className="size-3.5 text-primary" /> 취약점 학습
+              </h3>
+              {learnable.length > 0 ? (
+                <ul className="mt-3 space-y-2">
+                  {learnable.map((cwe) => (
+                    <li key={cwe.id}>
+                      <Link
+                        href={`/learn/${cwe.id}`}
+                        className="group flex items-center justify-between gap-2 rounded-lg border border-border bg-background/50 px-3 py-2.5 transition-colors hover:border-primary/50"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs font-semibold text-primary">{cwe.id}</p>
+                          <p className="truncate text-sm text-foreground">{cwe.name}</p>
+                        </div>
+                        <span className="shrink-0 font-mono text-[11px] text-primary transition-transform group-hover:translate-x-0.5">
+                          학습하기 →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <>
+                  <p className="mt-3 text-sm text-muted-foreground">이 CVE의 약점 유형은 아직 학습 페이지가 없어요.</p>
+                  <Link
+                    href="/learn"
+                    className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline"
+                  >
+                    전체 학습 목록 보기 →
+                  </Link>
+                </>
+              )}
+            </div>
+
             <div className="rounded-xl border border-border bg-card p-5">
               <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">CVSS 기본 점수</p>
               <div className="mt-2 flex items-end gap-2">
