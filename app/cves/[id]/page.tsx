@@ -1,5 +1,5 @@
 // app/cves/[id]/page.tsx — 새 CVE 상세 페이지 (/cves/CVE-xxxx-xxxx, NVD 데이터 기반)
-import { cache } from 'react'
+import { cache, Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -18,9 +18,10 @@ import { FavoriteButton } from '@/components/favorite-button'
 import { Tag } from '@/components/cve-bits'
 import { getNvdCve } from '@/lib/nvd'
 import { parseCvssVector, severityStyle, toSeverity, type CvssMetricItem } from '@/lib/cvss'
-import { getCwe } from '@/lib/mock-data'
+import { WeaknessChip } from '@/components/weakness-chip'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { SourceSection, SourceSectionSkeleton } from './source-section'
 
 const loadCve = cache(getNvdCve)
 
@@ -125,6 +126,12 @@ export default async function CveDetailPage({ params }: PageProps) {
                   공격 시나리오, 영향 범위, 권장 대응 방안을 한국어로 요약해 이 영역에 보여줄 예정입니다.
                 </p>
               </div>
+            </Section>
+
+            <Section title="실습용 소스 코드">
+              <Suspense fallback={<SourceSectionSkeleton />}>
+                <SourceSection cveId={cve.id} />
+              </Suspense>
             </Section>
 
             <Section
@@ -267,37 +274,6 @@ function MetricRow({ metric }: { metric: CvssMetricItem }) {
       </span>
     </div>
   )
-}
-
-function WeaknessChip({ id }: { id: string }) {
-  const known = getCwe(id)
-  const isCwe = /^CWE-\d+$/.test(id)
-  const className =
-    'inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs transition-colors hover:border-primary/50 hover:text-primary'
-
-  if (known) {
-    return (
-      <Link href={`/learn/${known.id}`} className={className}>
-        <span className="font-semibold text-primary">{known.id}</span>
-        <span className="text-muted-foreground">{known.name}</span>
-        <span className="text-[10px] text-primary">학습하기 →</span>
-      </Link>
-    )
-  }
-  if (isCwe) {
-    return (
-      <a
-        href={`https://cwe.mitre.org/data/definitions/${id.replace('CWE-', '')}.html`}
-        target="_blank"
-        rel="noreferrer"
-        className={className}
-      >
-        <span className="font-semibold text-foreground">{id}</span>
-        <ExternalLink className="size-3 text-muted-foreground" />
-      </a>
-    )
-  }
-  return <span className={cn(className, 'text-muted-foreground hover:border-border hover:text-muted-foreground')}>{id}</span>
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {

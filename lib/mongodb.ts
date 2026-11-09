@@ -78,6 +78,33 @@ export type CveDoc = Omit<NvdCveResult, 'id'> & {
   updatedAt: Date
 }
 
+export type SourceCommit = { sha: string; url: string | null }
+
+export type SourceRepo = {
+  repo: string
+  webUrl: string
+  vulnerableTags: { name: string; commit: string }[]
+  recommendedTag: string
+  introducedCommits: SourceCommit[]
+  fixedCommits: SourceCommit[]
+  lastAffectedCommits: SourceCommit[]
+}
+
+export type CveSourceResult = {
+  status: 'confirmed' | 'unavailable'
+  reason: string | null
+  osvId: string | null
+  repos: SourceRepo[]
+  checkedAt: string
+}
+
+export type CveSourceDoc = {
+  cveId: string
+  result: CveSourceResult
+  checkedAt: Date
+  expiresAt: Date
+}
+
 export type NvdCveCacheDoc = {
   cveId: string
   result: NvdCveResult
@@ -115,6 +142,7 @@ async function ensureIndexes(db: Db) {
     db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection('loginAttempts').createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 }),
     db.collection('nvdCveCache').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    db.collection('cveSources').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]).catch((error) => console.warn('TTL 인덱스를 만들지 못했습니다:', error.message))
 
   await Promise.all([
@@ -130,6 +158,7 @@ async function ensureIndexes(db: Db) {
     db.collection('reports').createIndex({ authorId: 1 }),
     db.collection('nvdCveCache').createIndex({ cveId: 1 }, { unique: true }),
     db.collection('cves').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cveSources').createIndex({ cveId: 1 }, { unique: true }),
     db.collection('cves').createIndex({ 'cvss.severity': 1, published: -1 }),
   ])
 }
@@ -160,5 +189,6 @@ export async function collections() {
     reports: db.collection<ReportDoc>('reports'),
     nvdCveCache: db.collection<NvdCveCacheDoc>('nvdCveCache'),
     cves: db.collection<CveDoc>('cves'),
+    cveSources: db.collection<CveSourceDoc>('cveSources'),
   }
 }

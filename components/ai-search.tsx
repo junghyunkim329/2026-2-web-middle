@@ -4,6 +4,7 @@
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { ArrowUpRight, Search } from 'lucide-react'
+import { WeaknessChip } from '@/components/weakness-chip'
 
 type CveResult = {
   id: string
@@ -136,9 +137,14 @@ export function AiSearch() {
               )}
             </dl>
             {result.weaknesses.length > 0 && (
-              <p className="mt-4 text-xs text-muted-foreground">
-                관련 약점: <span className="font-mono text-foreground">{result.weaknesses.join(', ')}</span>
-              </p>
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">관련 약점 · 학습하기</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[...new Set(result.weaknesses)].map((weakness) => (
+                    <WeaknessChip key={weakness} id={weakness} />
+                  ))}
+                </div>
+              </div>
             )}
             <a
               href={`https://nvd.nist.gov/vuln/detail/${encodeURIComponent(result.id)}`}
