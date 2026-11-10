@@ -1,12 +1,10 @@
 import Link from 'next/link'
-import { CWES, getCwe, getCve } from '@/lib/mock-data'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
+import { getCwe, getCve } from '@/lib/mock-data'
 import { CweReferenceView } from './cwe-reference'
 import { SeverityBadge } from '@/components/cve-bits'
 import { ArrowLeft, BookOpen, Circle } from 'lucide-react'
-
-export function generateStaticParams() {
-  return CWES.map((c) => ({ cwe: c.id }))
-}
 
 const CURRICULUM = [
   '개념과 발생 원리',
@@ -23,10 +21,14 @@ export default async function CweDetailPage({
   params: Promise<{ cwe: string }>
   searchParams: Promise<{ cve?: string }>
 }) {
-  const { cwe: cweId } = await params
+  const [{ cwe: cweId }, { cve }, user] = await Promise.all([params, searchParams, getCurrentUser()])
+  if (!user) {
+    const query = cve && /^CVE-\d{4}-\d{4,}$/i.test(cve) ? `?cve=${encodeURIComponent(cve)}` : ''
+    redirect(`/login?next=${encodeURIComponent(`/learn/${encodeURIComponent(cweId)}${query}`)}`)
+  }
+
   const cwe = getCwe(cweId)
   if (!cwe) {
-    const { cve } = await searchParams
     return <CweReferenceView id={cweId} fromCve={cve} />
   }
 
@@ -63,7 +65,7 @@ export default async function CweDetailPage({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_280px]">
+      <div className="mt-8">
         <div>
           <h2 className="flex items-center gap-2 font-mono text-sm font-semibold text-foreground">
             <BookOpen className="size-4 text-primary" /> 커리큘럼
@@ -100,22 +102,6 @@ export default async function CweDetailPage({
             ))}
           </div>
         </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              구성
-            </p>
-            <div className="mt-3 space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <BookOpen className="size-4" /> 강의
-                </span>
-                <span className="font-mono text-foreground">{cwe.lessons}</span>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   )
