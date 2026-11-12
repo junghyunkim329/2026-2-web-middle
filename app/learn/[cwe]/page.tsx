@@ -4,15 +4,14 @@ import { getCurrentUser } from '@/lib/auth'
 import { getCwe, getCve } from '@/lib/mock-data'
 import { CweReferenceView } from './cwe-reference'
 import { SeverityBadge } from '@/components/cve-bits'
-import { ArrowLeft, BookOpen, Circle } from 'lucide-react'
+import { getCurriculum, type LessonCode } from '@/lib/curriculum'
+import { ArrowLeft, BookOpen, ChevronDown, Circle } from 'lucide-react'
 
-const CURRICULUM = [
-  '개념과 발생 원리',
-  '취약 코드 패턴 식별',
-  '실제 CVE 사례 분석',
-  '익스플로잇 재현',
-  '완화 및 시큐어 코딩',
-]
+const CODE_STYLE: Record<LessonCode['nature'], string> = {
+  bad: 'border-destructive/40 text-destructive',
+  good: 'border-primary/40 text-primary',
+  other: 'border-border text-muted-foreground',
+}
 
 export default async function CweDetailPage({
   params,
@@ -71,11 +70,43 @@ export default async function CweDetailPage({
             <BookOpen className="size-4 text-primary" /> 커리큘럼
           </h2>
           <ol className="mt-4 space-y-2">
-            {CURRICULUM.map((title, i) => (
-              <li key={title} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
-                <Circle className="size-5 shrink-0 text-muted-foreground" />
-                <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
-                <span className="flex-1 text-sm text-muted-foreground">{title}</span>
+            {getCurriculum(cwe.id).map((lesson, i) => (
+              <li key={lesson.title}>
+                <details className="group rounded-lg border border-border bg-card open:border-primary/30">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                    <Circle className="size-5 shrink-0 text-muted-foreground" />
+                    <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
+                    <span className="flex-1 text-sm text-muted-foreground group-open:text-foreground">{lesson.title}</span>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-4 border-t border-border px-4 py-4">
+                    {lesson.summary && <p className="text-sm leading-relaxed text-foreground">{lesson.summary}</p>}
+                    {lesson.points.length > 0 && (
+                      <ul className="space-y-1.5">
+                        {lesson.points.map((point) => (
+                          <li key={point} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+                            <span className="text-primary">›</span>
+                            <span className="min-w-0 break-words">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {lesson.code?.map((block) => (
+                      <div key={block.label}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`rounded border px-2 py-0.5 font-mono text-[11px] ${CODE_STYLE[block.nature]}`}>
+                            {block.label}
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-foreground">{block.language}</span>
+                        </div>
+                        <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-xs leading-relaxed text-foreground">
+                          <code>{block.code}</code>
+                        </pre>
+                      </div>
+                    ))}
+                    {!lesson.summary && <p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
+                  </div>
+                </details>
               </li>
             ))}
           </ol>
