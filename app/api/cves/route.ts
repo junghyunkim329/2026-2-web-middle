@@ -1,4 +1,12 @@
 import { NextResponse } from 'next/server'
+import {
+  blockGeminiForCurrentProviderDay,
+  getCveAiCache,
+  isGeminiBlocked,
+  saveCveAiCache,
+} from '@/lib/ai-store'
+import { localizeCveDescription } from '@/lib/cve-translation'
+import { translateCveDescription } from '@/lib/gemini'
 import { collections, type NvdCveResult } from '@/lib/mongodb'
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
@@ -39,6 +47,22 @@ function pickPrimaryMetric(metrics: NvdMetric[] | undefined) {
   return metrics?.find((metric) => metric.type === 'Primary') ?? metrics?.[0]
 }
 
+async function localizeDescription(cveId: string, description: string, sourceLanguage: string | null) {
+  return localizeCveDescription({
+    cveId,
+    description,
+    sourceLanguage,
+    dependencies: {
+      getCache: getCveAiCache,
+      saveTranslation: (id, source, translation) =>
+        saveCveAiCache(id, { translationSource: source, translationKo: translation }),
+      isBlocked: isGeminiBlocked,
+      blockDaily: blockGeminiForCurrentProviderDay,
+      translate: translateCveDescription,
+    },
+  })
+}
+
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get('id')?.trim().toUpperCase() ?? ''
   if (!/^CVE-\d{4}-\d{4,}$/.test(id)) {
@@ -52,7 +76,11 @@ export async function GET(request: Request) {
   const now = new Date()
   const cached = await nvdCveCache.findOne({ cveId: id })
   if (cached && cached.expiresAt.getTime() > now.getTime()) {
-    return NextResponse.json({ cve: cached.result, cached: true })
+    const localized = await localizeDescription(id, cached.result.description, null)
+    return NextResponse.json({
+      cve: { ...cached.result, ...localized },
+      cached: true,
+    })
   }
 
   const url = new URL('https://services.nvd.nist.gov/rest/json/cves/2.0')
@@ -115,15 +143,17 @@ export async function GET(request: Request) {
     pickPrimaryMetric(cve.metrics?.cvssMetricV31) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV30) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV2)
-  const description =
-    cve.descriptions?.find((item) => item.lang === 'ko')?.value ??
-    cve.descriptions?.find((item) => item.lang === 'en')?.value ??
-    cve.descriptions?.[0]?.value ??
-    '설명이 제공되지 않았습니다.'
+  const descriptionItem =
+    cve.descriptions?.find((item) => item.lang === 'ko') ??
+    cve.descriptions?.find((item) => item.lang === 'en') ??
+    cve.descriptions?.[0] ??
+    { lang: 'ko', value: '설명이 제공되지 않았습니다.' }
+  const localized = await localizeDescription(cve.id, descriptionItem.value, descriptionItem.lang)
 
   const result: NvdCveResult = {
     id: cve.id,
-    description,
+    description: localized.description,
+    translationFailed: localized.translationFailed,
     published: cve.published,
     lastModified: cve.lastModified,
     status: cve.vulnStatus ?? null,

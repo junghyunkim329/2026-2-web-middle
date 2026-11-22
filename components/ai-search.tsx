@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Sparkles } from 'lucide-react'
 
 type CveResult = {
   id: string
   description: string
+  translationFailed: boolean
   published: string
   lastModified: string
   status: string | null
@@ -19,6 +20,14 @@ type CveResult = {
   references: { url: string; source?: string }[]
 }
 
+type CveAnalysis = {
+  summary: string
+  attackConditions: string[]
+  impact: string[]
+  mitigations: string[]
+  caution: string
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(new Date(value))
 }
@@ -28,6 +37,11 @@ export function AiSearch() {
   const [result, setResult] = useState<CveResult | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [analysis, setAnalysis] = useState<CveAnalysis | null>(null)
+  const [analysisError, setAnalysisError] = useState('')
+  const [analyzing, setAnalyzing] = useState(false)
+  const [remainingAnalyses, setRemainingAnalyses] = useState<number | null>(null)
+  const [analysisBlocked, setAnalysisBlocked] = useState(false)
   const references = [...new Map((result?.references ?? []).map((reference) => [reference.url, reference])).values()]
 
   async function searchCve(event: FormEvent<HTMLFormElement>) {
@@ -42,6 +56,8 @@ export function AiSearch() {
     setLoading(true)
     setError('')
     setResult(null)
+    setAnalysis(null)
+    setAnalysisError('')
     try {
       const response = await fetch(`/api/cves?id=${encodeURIComponent(id)}`)
       const data = (await response.json()) as { cve?: CveResult; error?: string }
@@ -52,6 +68,41 @@ export function AiSearch() {
       setError(cause instanceof Error ? cause.message : 'CVE 조회 중 오류가 발생했습니다.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function requestAnalysis() {
+    if (!result || analyzing || analysisBlocked || remainingAnalyses === 0) return
+
+    setAnalyzing(true)
+    setAnalysisError('')
+    try {
+      const response = await fetch('/api/cves/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cveId: result.id }),
+      })
+      const data = (await response.json()) as {
+        analysis?: CveAnalysis
+        remaining?: number
+        error?: string
+      }
+      if (!response.ok) {
+        if (response.status === 503 && data.error?.includes('전체 AI 사용량')) {
+          setAnalysisBlocked(true)
+        }
+        if (response.status === 429) setRemainingAnalyses(0)
+        throw new Error(data.error ?? 'AI 추가 분석에 실패했습니다.')
+      }
+      if (!data.analysis || typeof data.remaining !== 'number') {
+        throw new Error('AI 분석 응답 형식이 올바르지 않습니다.')
+      }
+      setAnalysis(data.analysis)
+      setRemainingAnalyses(data.remaining)
+    } catch (cause) {
+      setAnalysisError(cause instanceof Error ? cause.message : 'AI 추가 분석 중 오류가 발생했습니다.')
+    } finally {
+      setAnalyzing(false)
     }
   }
 
@@ -107,7 +158,14 @@ export function AiSearch() {
                 </span>
               )}
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-foreground">{result.description}</p>
+            {result.translationFailed && (
+              <p className="mt-4 text-xs text-warning">
+                한국어 번역에 실패하여 영어 원문을 표시합니다.
+              </p>
+            )}
+            <p className={result.translationFailed ? 'mt-2 text-sm leading-relaxed text-foreground' : 'mt-4 text-sm leading-relaxed text-foreground'}>
+              {result.description}
+            </p>
             <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs sm:grid-cols-3">
               <div>
                 <dt className="text-muted-foreground">공개일</dt>
@@ -137,6 +195,53 @@ export function AiSearch() {
             >
               NVD에서 상세 정보 보기 ↗
             </a>
+            <div className="mt-5 border-t border-border pt-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={requestAnalysis}
+                  disabled={analyzing || analysisBlocked || remainingAnalyses === 0}
+                  className="inline-flex items-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Sparkles className="size-4" />
+                  {analyzing ? 'AI 분석 중' : 'AI로 추가 분석하기'}
+                </button>
+                {remainingAnalyses !== null && (
+                  <span className="text-xs text-muted-foreground">
+                    오늘 남은 횟수 {remainingAnalyses}/5
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                로그인 사용자만 이용할 수 있으며 하루 5회로 제한됩니다.
+              </p>
+              {analysisError && (
+                <p role="alert" className="mt-3 text-sm text-destructive">
+                  {analysisError}
+                </p>
+              )}
+              {analysis && (
+                <div className="mt-4 space-y-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-primary">AI 분석 요약</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-foreground">{analysis.summary}</p>
+                  </div>
+                  {[
+                    ['공격 조건', analysis.attackConditions],
+                    ['예상 영향', analysis.impact],
+                    ['대응 방법', analysis.mitigations],
+                  ].map(([title, items]) => (
+                    <div key={title as string}>
+                      <h3 className="text-xs font-semibold text-foreground">{title}</h3>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                        {(items as string[]).map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    </div>
+                  ))}
+                  <p className="border-t border-border pt-3 text-xs text-warning">{analysis.caution}</p>
+                </div>
+              )}
+            </div>
             {references.length > 0 && (
               <ul className="mt-4 space-y-2 border-t border-border pt-4">
                 {references.map((reference) => (

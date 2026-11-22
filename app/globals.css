@@ -31,8 +31,8 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Noto Sans KR', 'Malgun Gothic', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Noto Sans KR', 'Malgun Gothic', ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
