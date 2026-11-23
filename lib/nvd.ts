@@ -82,6 +82,7 @@ function toResult(cve: NvdCve): NvdCveResult {
   return {
     id: cve.id,
     description,
+    translationFailed: false,
     published: cve.published,
     lastModified: cve.lastModified,
     status: cve.vulnStatus ?? null,

@@ -1,14 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Noto_Sans } from 'next/font/google'
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
 import './globals.css'
-
-const notoSans = Noto_Sans({
-  subsets: ['latin'],
-  variable: '--font-noto-sans',
-})
 
 export const metadata: Metadata = {
   title: 'CVEHUB — CVE 학습 및 분석 플랫폼',
@@ -27,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" className={`${notoSans.variable} bg-background`}>
+    <html lang="ko" className="bg-background">
       <body className="antialiased font-sans flex min-h-dvh flex-col">
         <SiteNav />
         <main className="flex-1">{children}</main>
