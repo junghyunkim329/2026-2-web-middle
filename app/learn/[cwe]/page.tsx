@@ -5,6 +5,8 @@ import { getCwe, getCve } from '@/lib/mock-data'
 import { CweReferenceView } from './cwe-reference'
 import { SeverityBadge } from '@/components/cve-bits'
 import { getCurriculum, type LessonCode } from '@/lib/curriculum'
+import { SqliLab } from '@/components/labs/sqli-lab'
+import { XssLab } from '@/components/labs/xss-lab'
 import { ArrowLeft, BookOpen, ChevronDown, Circle } from 'lucide-react'
 
 const CODE_STYLE: Record<LessonCode['nature'], string> = {
@@ -104,7 +106,9 @@ export default async function CweDetailPage({
                         </pre>
                       </div>
                     ))}
-                    {!lesson.summary && <p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
+                    {lesson.lab === 'sqli' && <SqliLab />}
+                    {lesson.lab === 'xss' && <XssLab />}
+                    {!lesson.summary &&<p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
                   </div>
                 </details>
               </li>

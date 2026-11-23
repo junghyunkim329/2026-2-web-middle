@@ -11,6 +11,7 @@ export type Lesson = {
   summary: string
   points: string[]
   code?: LessonCode[]
+  lab?: 'sqli' | 'xss'
 }
 
 const STEP_TITLES = [
@@ -78,6 +79,7 @@ const CURRICULUM: Record<string, Lesson[]> = {
     },
     {
       summary: `${LAB_NOTICE} 위의 취약한 로그인 코드를 대상으로 쿼리 구조가 어떻게 바뀌는지 확인합니다.`,
+      lab: 'sqli',
       points: [
         "아이디 칸에 admin' -- 를 입력하면 뒤쪽 비밀번호 조건이 주석 처리됨",
         "' OR '1'='1 을 넣으면 WHERE 조건이 항상 참이 되어 첫 번째 계정으로 로그인됨",
@@ -160,6 +162,7 @@ document.querySelector('#greeting').innerHTML = '안녕하세요, ' + name + '�
     },
     {
       summary: `${LAB_NOTICE} 위 DOM 기반 예제를 로컬에 띄우고 name 파라미터를 바꿔 가며 확인합니다.`,
+      lab: 'xss',
       points: [
         '먼저 <b>test</b> 처럼 무해한 태그로 HTML이 해석되는지 확인',
         '<script>는 innerHTML로 넣으면 실행되지 않으므로 이벤트 핸들러를 사용',
