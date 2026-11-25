@@ -7,7 +7,9 @@ import { SeverityBadge } from '@/components/cve-bits'
 import { getCurriculum, type LessonCode } from '@/lib/curriculum'
 import { SqliLab } from '@/components/labs/sqli-lab'
 import { XssLab } from '@/components/labs/xss-lab'
-import { ArrowLeft, BookOpen, ChevronDown, Circle } from 'lucide-react'
+import { collections } from '@/lib/mongodb'
+import { CompleteLessonButton, LearningProgressProvider, LessonStatusIcon, ProgressBar } from './learning-progress'
+import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react'
 
 const CODE_STYLE: Record<LessonCode['nature'], string> = {
   bad: 'border-destructive/40 text-destructive',
@@ -34,8 +36,15 @@ export default async function CweDetailPage({
   }
 
   const relatedCves = cwe.relatedCves.map((id) => getCve(id)).filter(Boolean)
+  const lessons = getCurriculum(cwe.id)
+  const { learningProgress } = await collections()
+  const progress = await learningProgress.findOne({ userId: user._id, cweId: cwe.id })
+  // 강의 내용이 있는 단계만 진행률에 넣는다 (준비 중인 단계는 완료할 수 없음)
+  const completed = (progress?.completed ?? []).filter((n) => Boolean(lessons[n]?.summary)).sort((a, b) => a - b)
+  const total = lessons.filter((lesson) => lesson.summary).length
 
   return (
+    <LearningProgressProvider cweId={cwe.id} initialCompleted={completed} total={total}>
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <Link
         href="/learn"
@@ -57,13 +66,7 @@ export default async function CweDetailPage({
         <h1 className="mt-3 text-2xl font-bold text-foreground">{cwe.name}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{cwe.description}</p>
 
-        <div className="mt-5">
-          <div className="flex items-center justify-between font-mono text-xs">
-            <span className="text-muted-foreground">학습 진행률</span>
-            <span className="text-muted-foreground">0%</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary" />
-        </div>
+        <ProgressBar />
       </div>
 
       <div className="mt-8">
@@ -72,11 +75,11 @@ export default async function CweDetailPage({
             <BookOpen className="size-4 text-primary" /> 커리큘럼
           </h2>
           <ol className="mt-4 space-y-2">
-            {getCurriculum(cwe.id).map((lesson, i) => (
+            {lessons.map((lesson, i) => (
               <li key={lesson.title}>
                 <details className="group rounded-lg border border-border bg-card open:border-primary/30">
                   <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
-                    <Circle className="size-5 shrink-0 text-muted-foreground" />
+                    <LessonStatusIcon lesson={i} />
                     <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
                     <span className="flex-1 text-sm text-muted-foreground group-open:text-foreground">{lesson.title}</span>
                     <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
@@ -108,7 +111,8 @@ export default async function CweDetailPage({
                     ))}
                     {lesson.lab === 'sqli' && <SqliLab />}
                     {lesson.lab === 'xss' && <XssLab />}
-                    {!lesson.summary &&<p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
+                    {!lesson.summary && <p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
+                    {lesson.summary && <CompleteLessonButton lesson={i} />}
                   </div>
                 </details>
               </li>
@@ -139,5 +143,6 @@ export default async function CweDetailPage({
         </div>
       </div>
     </div>
+    </LearningProgressProvider>
   )
 }

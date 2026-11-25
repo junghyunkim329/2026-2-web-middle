@@ -28,6 +28,14 @@ export type FavoriteDoc = {
   createdAt: Date
 }
 
+// 사용자별 CWE 학습 진행 상황 (완료한 커리큘럼 단계 번호 목록)
+export type LearningProgressDoc = {
+  userId: ObjectId
+  cweId: string
+  completed: number[]
+  updatedAt: Date
+}
+
 export type QuestionDoc = {
   title: string
   body: string
@@ -176,6 +184,7 @@ async function ensureIndexes(db: Db) {
     db.collection('sessions').createIndex({ tokenHash: 1 }, { unique: true }),
     db.collection('loginAttempts').createIndex({ email: 1, createdAt: 1 }),
     db.collection('favorites').createIndex({ userId: 1, cveId: 1 }, { unique: true }),
+    db.collection('learningProgress').createIndex({ userId: 1, cweId: 1 }, { unique: true }),
     db.collection('questions').createIndex({ createdAt: -1 }),
     db.collection('questions').createIndex({ authorId: 1 }),
     db.collection('answers').createIndex({ questionId: 1, createdAt: 1 }),
@@ -211,6 +220,7 @@ export async function collections() {
     sessions: db.collection<SessionDoc>('sessions'),
     loginAttempts: db.collection<LoginAttemptDoc>('loginAttempts'),
     favorites: db.collection<FavoriteDoc>('favorites'),
+    learningProgress: db.collection<LearningProgressDoc>('learningProgress'),
     questions: db.collection<QuestionDoc>('questions'),
     answers: db.collection<AnswerDoc>('answers'),
     reports: db.collection<ReportDoc>('reports'),
