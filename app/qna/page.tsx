@@ -43,7 +43,7 @@ export default async function QnaPage({
       <AskQuestion loggedIn={Boolean(user)}>
         <div className="flex items-center gap-2">
           <MessageSquare className="size-5 text-primary" />
-          <h1 className="font-mono text-3xl font-bold text-foreground">질의응답</h1>
+          <h1 className="font-mono text-2xl font-bold text-foreground sm:text-3xl">질의응답</h1>
         </div>
         <p className="mt-1 text-base text-muted-foreground">
           취약점 대응·실습·분석에 대해 사용자끼리 묻고 답합니다.
@@ -53,7 +53,7 @@ export default async function QnaPage({
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <form
           action="/qna"
-          className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2"
+          className="flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 sm:w-auto sm:flex-1"
         >
           <Search className="size-4 text-muted-foreground" />
           {filter !== 'latest' && <input type="hidden" name="filter" value={filter} />}
@@ -65,7 +65,7 @@ export default async function QnaPage({
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </form>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {FILTERS.map((item) => (
             <Link
               key={item.key}
@@ -101,7 +101,7 @@ export default async function QnaPage({
                 <h3 className="text-pretty break-words font-medium text-foreground">{question.title}</h3>
               </div>
               <p className="mt-1 line-clamp-1 break-all text-sm text-muted-foreground">{question.excerpt}</p>
-              <div className="mt-2 flex items-center gap-3 font-mono text-[11px] text-muted-foreground">
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
                 <span>@{question.author}</span>
                 <span>{timeAgo(question.createdAt)}</span>
                 <span className="flex items-center gap-1">

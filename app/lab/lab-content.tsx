@@ -313,16 +313,16 @@ function LabList() {
               key={item.id}
               href={`/lab?cve=${item.id}`}
               className={cn(
-                'group flex items-center gap-5 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/60',
+                'group flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-4 sm:flex-nowrap sm:gap-5 transition-colors hover:border-primary/60',
                 !available && 'opacity-60',
               )}
             >
-              <span className="min-w-36 font-mono text-sm font-semibold text-primary">{item.id}</span>
+              <span className="font-mono sm:min-w-36 text-sm font-semibold text-primary">{item.id}</span>
               <span className="shrink-0"><SeverityBadge severity={item.severity} score={item.cvss} /></span>
-              <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover:text-primary">{item.title}</p>
+              <p className="order-last min-w-0 basis-full truncate sm:order-none sm:basis-0 sm:flex-1 text-sm font-medium text-foreground group-hover:text-primary">{item.title}</p>
               <span
                 className={cn(
-                  'shrink-0 rounded border px-2 py-0.5 font-mono text-[11px]',
+                  'ml-auto shrink-0 rounded border sm:ml-0 px-2 py-0.5 font-mono text-[11px]',
                   available ? 'border-primary/50 text-primary' : 'border-border text-muted-foreground',
                 )}
               >

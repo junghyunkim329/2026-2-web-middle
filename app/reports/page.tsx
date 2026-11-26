@@ -22,7 +22,7 @@ export default async function ReportsPage({
         <div>
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-primary" />
-            <h1 className="font-mono text-3xl font-bold text-foreground">원데이 리포트</h1>
+            <h1 className="font-mono text-2xl font-bold text-foreground sm:text-3xl">원데이 리포트</h1>
           </div>
           <p className="mt-1 text-base text-muted-foreground">
             CVE를 공부하며 정리한 내용을 기록하고 함께 나눕니다.
@@ -71,7 +71,7 @@ export default async function ReportsPage({
               <h3 className="min-w-0 break-words font-medium text-foreground">{r.title}</h3>
             </div>
             <p className="mt-1 line-clamp-2 break-all text-sm text-muted-foreground">{r.excerpt}</p>
-            <div className="mt-2 flex items-center gap-3 font-mono text-[11px] text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
               <span>@{r.author}</span>
               <span>{formatDate(r.createdAt)}</span>
             </div>
