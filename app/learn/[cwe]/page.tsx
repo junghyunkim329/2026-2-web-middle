@@ -1,42 +1,50 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { CWES, getCwe, getCve } from '@/lib/mock-data'
+import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth'
+import { getCwe, getCve } from '@/lib/mock-data'
+import { CweReferenceView } from './cwe-reference'
 import { SeverityBadge } from '@/components/cve-bits'
-import {
-  ArrowLeft,
-  BookOpen,
-  CheckCircle2,
-  Circle,
-  FlaskConical,
-  PlayCircle,
-} from 'lucide-react'
+import { getCurriculum, type LessonCode } from '@/lib/curriculum'
+import { SqliLab } from '@/components/labs/sqli-lab'
+import { XssLab } from '@/components/labs/xss-lab'
+import { collections } from '@/lib/mongodb'
+import { CompleteLessonButton, LearningProgressProvider, LessonStatusIcon, ProgressBar } from './learning-progress'
+import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react'
 
-export function generateStaticParams() {
-  return CWES.map((c) => ({ cwe: c.id }))
+const CODE_STYLE: Record<LessonCode['nature'], string> = {
+  bad: 'border-destructive/40 text-destructive',
+  good: 'border-primary/40 text-primary',
+  other: 'border-border text-muted-foreground',
 }
-
-const CURRICULUM = [
-  { title: '개념과 발생 원리', done: true },
-  { title: '취약 코드 패턴 식별', done: true },
-  { title: '실제 CVE 사례 분석', done: false },
-  { title: '익스플로잇 재현', done: false },
-  { title: '완화 및 시큐어 코딩', done: false },
-]
 
 export default async function CweDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ cwe: string }>
+  searchParams: Promise<{ cve?: string }>
 }) {
-  const { cwe: cweId } = await params
+  const [{ cwe: cweId }, { cve }, user] = await Promise.all([params, searchParams, getCurrentUser()])
+  if (!user) {
+    const query = cve && /^CVE-\d{4}-\d{4,}$/i.test(cve) ? `?cve=${encodeURIComponent(cve)}` : ''
+    redirect(`/login?next=${encodeURIComponent(`/learn/${encodeURIComponent(cweId)}${query}`)}`)
+  }
+
   const cwe = getCwe(cweId)
-  if (!cwe) notFound()
+  if (!cwe) {
+    return <CweReferenceView id={cweId} fromCve={cve} />
+  }
 
   const relatedCves = cwe.relatedCves.map((id) => getCve(id)).filter(Boolean)
-  const progress = CURRICULUM.filter((c) => c.done).length
-  const pct = Math.round((progress / CURRICULUM.length) * 100)
+  const lessons = getCurriculum(cwe.id)
+  const { learningProgress } = await collections()
+  const progress = await learningProgress.findOne({ userId: user._id, cweId: cwe.id })
+  // 강의 내용이 있는 단계만 진행률에 넣는다 (준비 중인 단계는 완료할 수 없음)
+  const completed = (progress?.completed ?? []).filter((n) => Boolean(lessons[n]?.summary)).sort((a, b) => a - b)
+  const total = lessons.filter((lesson) => lesson.summary).length
 
   return (
+    <LearningProgressProvider cweId={cwe.id} initialCompleted={completed} total={total}>
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <Link
         href="/learn"
@@ -58,44 +66,55 @@ export default async function CweDetailPage({
         <h1 className="mt-3 text-2xl font-bold text-foreground">{cwe.name}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{cwe.description}</p>
 
-        <div className="mt-5">
-          <div className="flex items-center justify-between font-mono text-xs">
-            <span className="text-muted-foreground">학습 진행률</span>
-            <span className="text-primary">{pct}%</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-primary box-glow" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
+        <ProgressBar />
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_280px]">
+      <div className="mt-8">
         <div>
           <h2 className="flex items-center gap-2 font-mono text-sm font-semibold text-foreground">
             <BookOpen className="size-4 text-primary" /> 커리큘럼
           </h2>
           <ol className="mt-4 space-y-2">
-            {CURRICULUM.map((step, i) => (
-              <li
-                key={step.title}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
-              >
-                {step.done ? (
-                  <CheckCircle2 className="size-5 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="size-5 shrink-0 text-muted-foreground" />
-                )}
-                <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
-                <span
-                  className={`flex-1 text-sm ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}
-                >
-                  {step.title}
-                </span>
-                {!step.done && i === progress && (
-                  <span className="flex items-center gap-1 font-mono text-[11px] text-accent">
-                    <PlayCircle className="size-3.5" /> 이어서
-                  </span>
-                )}
+            {lessons.map((lesson, i) => (
+              <li key={lesson.title}>
+                <details className="group rounded-lg border border-border bg-card open:border-primary/30">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                    <LessonStatusIcon lesson={i} />
+                    <span className="font-mono text-xs text-muted-foreground">{`0${i + 1}`}</span>
+                    <span className="flex-1 text-sm text-muted-foreground group-open:text-foreground">{lesson.title}</span>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="space-y-4 border-t border-border px-4 py-4">
+                    {lesson.summary && <p className="text-sm leading-relaxed text-foreground">{lesson.summary}</p>}
+                    {lesson.points.length > 0 && (
+                      <ul className="space-y-1.5">
+                        {lesson.points.map((point) => (
+                          <li key={point} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+                            <span className="text-primary">›</span>
+                            <span className="min-w-0 break-words">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {lesson.code?.map((block) => (
+                      <div key={block.label}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`rounded border px-2 py-0.5 font-mono text-[11px] ${CODE_STYLE[block.nature]}`}>
+                            {block.label}
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-foreground">{block.language}</span>
+                        </div>
+                        <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-xs leading-relaxed text-foreground">
+                          <code>{block.code}</code>
+                        </pre>
+                      </div>
+                    ))}
+                    {lesson.lab === 'sqli' && <SqliLab />}
+                    {lesson.lab === 'xss' && <XssLab />}
+                    {!lesson.summary && <p className="text-sm text-muted-foreground">강의 내용을 준비 중이에요.</p>}
+                    {lesson.summary && <CompleteLessonButton lesson={i} />}
+                  </div>
+                </details>
               </li>
             ))}
           </ol>
@@ -122,36 +141,8 @@ export default async function CweDetailPage({
             ))}
           </div>
         </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-4">
-            <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              구성
-            </p>
-            <div className="mt-3 space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <BookOpen className="size-4" /> 강의
-                </span>
-                <span className="font-mono text-foreground">{cwe.lessons}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                  <FlaskConical className="size-4" /> 실습 랩
-                </span>
-                <span className="font-mono text-foreground">{cwe.labs}</span>
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href="/lab"
-            className="flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-          >
-            <FlaskConical className="size-4" /> 실습 랩 시작
-          </Link>
-        </aside>
       </div>
     </div>
+    </LearningProgressProvider>
   )
 }

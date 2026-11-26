@@ -28,6 +28,14 @@ export type FavoriteDoc = {
   createdAt: Date
 }
 
+// 사용자별 CWE 학습 진행 상황 (완료한 커리큘럼 단계 번호 목록)
+export type LearningProgressDoc = {
+  userId: ObjectId
+  cweId: string
+  completed: number[]
+  updatedAt: Date
+}
+
 export type QuestionDoc = {
   title: string
   body: string
@@ -69,6 +77,42 @@ export type NvdCveResult = {
   } | null
   weaknesses: string[]
   references: { url: string; source?: string }[]
+}
+
+export type CveDoc = Omit<NvdCveResult, 'id'> & {
+  cveId: string
+  descriptions: { lang: string; value: string }[]
+  source: 'nvd'
+  fetchedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type SourceCommit = { sha: string; url: string | null }
+
+export type SourceRepo = {
+  repo: string
+  webUrl: string
+  vulnerableTags: { name: string; commit: string }[]
+  recommendedTag: string
+  introducedCommits: SourceCommit[]
+  fixedCommits: SourceCommit[]
+  lastAffectedCommits: SourceCommit[]
+}
+
+export type CveSourceResult = {
+  status: 'confirmed' | 'unavailable'
+  reason: string | null
+  osvId: string | null
+  repos: SourceRepo[]
+  checkedAt: string
+}
+
+export type CveSourceDoc = {
+  cveId: string
+  result: CveSourceResult
+  checkedAt: Date
+  expiresAt: Date
 }
 
 export type NvdCveCacheDoc = {
@@ -131,6 +175,7 @@ async function ensureIndexes(db: Db) {
     db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection('loginAttempts').createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 }),
     db.collection('nvdCveCache').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    db.collection('cveSources').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]).catch((error) => console.warn('TTL 인덱스를 만들지 못했습니다:', error.message))
 
   await Promise.all([
@@ -139,12 +184,16 @@ async function ensureIndexes(db: Db) {
     db.collection('sessions').createIndex({ tokenHash: 1 }, { unique: true }),
     db.collection('loginAttempts').createIndex({ email: 1, createdAt: 1 }),
     db.collection('favorites').createIndex({ userId: 1, cveId: 1 }, { unique: true }),
+    db.collection('learningProgress').createIndex({ userId: 1, cweId: 1 }, { unique: true }),
     db.collection('questions').createIndex({ createdAt: -1 }),
     db.collection('questions').createIndex({ authorId: 1 }),
     db.collection('answers').createIndex({ questionId: 1, createdAt: 1 }),
     db.collection('reports').createIndex({ createdAt: -1 }),
     db.collection('reports').createIndex({ authorId: 1 }),
     db.collection('nvdCveCache').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cves').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cveSources').createIndex({ cveId: 1 }, { unique: true }),
+    db.collection('cves').createIndex({ 'cvss.severity': 1, published: -1 }),
     db.collection('aiUsage').createIndex({ userId: 1, dateKey: 1 }, { unique: true }),
     db.collection('cveAiCache').createIndex({ cveId: 1 }, { unique: true }),
   ])
@@ -171,10 +220,13 @@ export async function collections() {
     sessions: db.collection<SessionDoc>('sessions'),
     loginAttempts: db.collection<LoginAttemptDoc>('loginAttempts'),
     favorites: db.collection<FavoriteDoc>('favorites'),
+    learningProgress: db.collection<LearningProgressDoc>('learningProgress'),
     questions: db.collection<QuestionDoc>('questions'),
     answers: db.collection<AnswerDoc>('answers'),
     reports: db.collection<ReportDoc>('reports'),
     nvdCveCache: db.collection<NvdCveCacheDoc>('nvdCveCache'),
+    cves: db.collection<CveDoc>('cves'),
+    cveSources: db.collection<CveSourceDoc>('cveSources'),
     aiUsage: db.collection<AiUsageDoc>('aiUsage'),
     geminiState: db.collection<GeminiStateDoc>('geminiState'),
     cveAiCache: db.collection<CveAiCacheDoc>('cveAiCache'),

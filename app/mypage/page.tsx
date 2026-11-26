@@ -21,16 +21,18 @@ export default async function MyPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-5">
-        <span className="flex size-14 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
           <User className="size-7" />
         </span>
-        <div>
-          <h1 className="font-mono text-lg font-bold text-foreground">{user.nickname}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-mono text-lg font-bold text-foreground">{user.nickname}</h1>
           <p className="text-sm text-muted-foreground">
-            {user.email} · {formatDate(user.createdAt)} 가입
+            <span className="break-all">{user.email}</span>
+            <span className="hidden sm:inline"> · </span>
+            <span className="block sm:inline">{formatDate(user.createdAt)} 가입</span>
           </p>
         </div>
-        <div className="ml-auto grid grid-cols-3 gap-2">
+        <div className="grid w-full grid-cols-3 gap-2 sm:ml-auto sm:w-auto">
           <StatPill label="저장" value={String(favorites.length)} tone="primary" />
           <StatPill label="리포트" value={String(reports.length)} tone="accent" />
           <StatPill label="질문" value={String(questions.length)} tone="warning" />

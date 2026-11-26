@@ -1,3 +1,4 @@
+// app/api/cves/route.ts — 메인 검색창이 호출하는 CVE 조회 API (GET /api/cves?id=CVE-xxxx-xxxx)
 import { NextResponse } from 'next/server'
 import {
   blockGeminiForCurrentProviderDay,
@@ -8,6 +9,7 @@ import {
 import { localizeCveDescription } from '@/lib/cve-translation'
 import { translateCveDescription } from '@/lib/gemini'
 import { collections, type NvdCveResult } from '@/lib/mongodb'
+import { pickDescription } from '@/lib/nvd'
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
@@ -144,10 +146,9 @@ export async function GET(request: Request) {
     pickPrimaryMetric(cve.metrics?.cvssMetricV30) ??
     pickPrimaryMetric(cve.metrics?.cvssMetricV2)
   const descriptionItem =
-    cve.descriptions?.find((item) => item.lang === 'ko') ??
-    cve.descriptions?.find((item) => item.lang === 'en') ??
+    cve.descriptions?.find((item) => item.lang === 'en' && item.value.trim()) ??
     cve.descriptions?.[0] ??
-    { lang: 'ko', value: '설명이 제공되지 않았습니다.' }
+    { lang: 'en', value: pickDescription(cve.descriptions) }
   const localized = await localizeDescription(cve.id, descriptionItem.value, descriptionItem.lang)
 
   const result: NvdCveResult = {

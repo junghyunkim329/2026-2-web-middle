@@ -1,7 +1,9 @@
+// components/ai-search.tsx — 메인 화면 CVE 검색창과 검색 결과 카드 (CVE ID 클릭 시 상세 페이지로 이동)
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { Search, Sparkles } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowUpRight, Search, Sparkles } from 'lucide-react'
 
 type CveResult = {
   id: string
@@ -145,7 +147,16 @@ export function AiSearch() {
         {result && (
           <article className="rounded-xl border border-border bg-card p-5 shadow-lg shadow-black/20 sm:p-6">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="font-mono text-lg font-bold text-primary">{result.id}</h2>
+              <h2 className="font-mono text-lg font-bold text-primary">
+                <Link
+                  href={`/cves/${encodeURIComponent(result.id)}`}
+                  title="상세 페이지로 이동"
+                  className="group inline-flex items-center gap-1 rounded-md border border-transparent px-1.5 py-0.5 -mx-1.5 transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-glow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                >
+                  {result.id}
+                  <ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </Link>
+              </h2>
               {result.cvss?.score !== null && result.cvss?.score !== undefined ? (
                 <span className="rounded border border-border bg-secondary px-2 py-1 font-mono text-xs font-semibold text-foreground">
                   CVSS {result.cvss.version ? `${result.cvss.version} ` : ''}
